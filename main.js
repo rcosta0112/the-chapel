@@ -15,54 +15,35 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
 
 // Controls
-import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
 import * as CANNON from 'cannon-es'
-
+import { PointerLockControlsCannon } from './js/PointerLockControlsCannon.js';
+import { threeToCannon, ShapeType } from 'three-to-cannon';
 
 const basePath = import.meta.env.BASE_URL;
 
 const container = document.getElementById('container');
 const loading = document.querySelector('.loading');
 
-let camera, scene, composer, renderer, controls, stats;
+let camera, scene, composer, renderer, stats;
 
 
 // Pointer Lock Controls
 
-let raycaster;
+// cannon.js variables
+let world
+let controls
+const timeStep = 1 / 60
+let lastCallTime = performance.now() / 1000
+let sphereShape
+let sphereBody
+let physicsMaterial
 
-let moveSpeed = 100; // higher means slower for some reason
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-let canJump = false;
-
-let prevTime = performance.now();
-const velocity = new THREE.Vector3();
-const direction = new THREE.Vector3();
-
-// Physics
-const world = new CANNON.World();
-world.gravity.set(0, -9.82, 0)
-let worldDelta;
-const clock = new THREE.Clock()
-
-const normalMaterial = new THREE.MeshNormalMaterial()
-const phongMaterial = new THREE.MeshPhongMaterial()
-const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
-const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial)
-const cubeShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5))
-const cubeBody = new CANNON.Body({ mass: 1 })
-const planeGeometry = new THREE.PlaneGeometry(25, 25)
-const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial)
-const planeShape = new CANNON.Plane()
-const planeBody = new CANNON.Body({ mass: 0 })
-
+initCannon();
 init();
-animate();
+initPointerLock()
 
+animate();
 
 
 function init() {
@@ -81,41 +62,8 @@ function init() {
   container.appendChild(renderer.domElement);
 
   // Camera
-  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-  camera.position.set(0, 1.9, 16.5);
-
-
-
-  // Physics
-
-  cubeMesh.position.x = 0
-  cubeMesh.position.y = -10
-  // scene.add(cubeMesh)
-
-  cubeBody.addShape(cubeShape)
-  cubeBody.position.x = cubeMesh.position.x
-  cubeBody.position.y = cubeMesh.position.y
-  cubeBody.position.z = cubeMesh.position.z
-  // world.addBody(cubeBody)
-  
-  planeMesh.rotateX(-Math.PI / 2)
-  // scene.add(planeMesh)
- 
-  planeBody.addShape(planeShape)
-  planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2)
-  // world.addBody(planeBody)
-
-
-
-  // Lights
-
-  const dirLight = new THREE.DirectionalLight(0xffffff, 10);
-  dirLight.color.setHSL(0.1, 1, 0.95);
-  dirLight.position.set(- 1, 1.75, 1);
-  dirLight.position.multiplyScalar(30);
-  // scene.add(dirLight);
-
-
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 1, 0);
 
   //
   // Post Processing
@@ -138,89 +86,6 @@ function init() {
   // composer.addPass(bloomPass);
 
 
-
-
-  //
-  //  Controls
-  //
-
-
-  controls = new PointerLockControls(camera, container);
-  controls.pointerSpeed = 0.5;
-
-  const blocker = document.getElementById('blocker');
-  const instructions = document.getElementById('instructions');
-
-  instructions.style.display = 'none';
-  blocker.style.display = 'none';
-
-  instructions.addEventListener('click', function () {
-    controls.lock();
-  });
-
-  controls.addEventListener('lock', function () {
-    instructions.style.display = 'none';
-    blocker.style.display = 'none';
-  });
-
-  controls.addEventListener('unlock', function () {
-    blocker.style.display = 'block';
-    instructions.style.display = '';
-  });
-
-  scene.add(controls.getObject());
-
-
-  const onKeyDown = function (event) {
-    switch (event.code) {
-      case 'ArrowUp':
-      case 'KeyW':
-        moveForward = true;
-        break;
-      case 'ArrowLeft':
-      case 'KeyA':
-        moveLeft = true;
-        break;
-      case 'ArrowDown':
-      case 'KeyS':
-        moveBackward = true;
-        break;
-      case 'ArrowRight':
-      case 'KeyD':
-        moveRight = true;
-        break;
-      case 'Space':
-        if (canJump === true) velocity.y += 350;
-        canJump = false;
-        break;
-    }
-  };
-
-  const onKeyUp = function (event) {
-    switch (event.code) {
-      case 'ArrowUp':
-      case 'KeyW':
-        moveForward = false;
-        break;
-      case 'ArrowLeft':
-      case 'KeyA':
-        moveLeft = false;
-        break;
-      case 'ArrowDown':
-      case 'KeyS':
-        moveBackward = false;
-        break;
-      case 'ArrowRight':
-      case 'KeyD':
-        moveRight = false;
-        break;
-    }
-  };
-
-  document.addEventListener('keydown', onKeyDown);
-  document.addEventListener('keyup', onKeyUp);
-
-  raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, - 1, 0), 0, 10);
 
 
 
@@ -249,28 +114,129 @@ function init() {
       loader.setKTX2Loader(ktx2Loader);
       loader.setMeshoptDecoder(MeshoptDecoder);
 
-      loader.load('the-chapel.glb', function (building) {
+      loader.load('the-chapel.glb', function (mesh) {
 
-        scene.add(building.scene);
+        scene.add(mesh.scene);
 
-        // Shows UI
-        blocker.style.display = 'block';
-        instructions.style.display = '';
+        loader.load('collision.glb', function (mesh) {
 
-        container.classList.add('in');
-        loading.classList.remove('in');
+          // scene.add(mesh.scene);
+
+          mesh.scene.children.forEach(function (node) {
+            if (node.isMesh) {
+              // Converts mesh to cannonjs
+              // The collision mesh needs to be made moslty of boxes
+              const { shape, offset, quaternion } = threeToCannon(node);
+              // Add the shape to a CANNON.Body.
+              let body = new CANNON.Body({ mass: 0, material: physicsMaterial });
+              body.addShape(shape, offset, quaternion);
+              body.position = node.position;
+              body.type = CANNON.Body.STATIC;
+              world.addBody(body)
+            }
+          });
+
+          // Shows UI
+          blocker.style.display = 'block';
+          instructions.style.display = '';
+
+          container.classList.add('in');
+          loading.classList.remove('in');
+
+        });
 
       });
 
     });
+
+  stats = new Stats();
+  document.body.appendChild(stats.dom);
 
   window.addEventListener('resize', onWindowResize);
 
 } // /Init
 
 
+function initCannon() {
+  // Setup world
+  world = new CANNON.World()
+
+  // Tweak contact properties.
+  // Contact stiffness - use to make softer/harder contacts
+  world.defaultContactMaterial.contactEquationStiffness = 1e9
+
+  // Stabilization time in number of timesteps
+  world.defaultContactMaterial.contactEquationRelaxation = 4
+
+  const solver = new CANNON.GSSolver()
+  solver.iterations = 7
+  solver.tolerance = 0.1
+  world.solver = new CANNON.SplitSolver(solver)
+  // use this to test non-split solver
+  // world.solver = solver
+
+  world.gravity.set(0, -1, 0)
+
+  world.broadphase.useBoundingBoxes = true
+
+  // Create a slippery material (friction coefficient = 0.0)
+  physicsMaterial = new CANNON.Material('physics')
+  const physics_physics = new CANNON.ContactMaterial(physicsMaterial, physicsMaterial, {
+    friction: 0.0,
+    restitution: 0.3,
+  })
+
+  // We must add the contact materials to the world
+  world.addContactMaterial(physics_physics)
+
+  // Create the user collision sphere
+  const radius = 1;
+  sphereShape = new CANNON.Sphere(radius);
+  sphereBody = new CANNON.Body({ mass: 5, material: physicsMaterial });
+  sphereBody.addShape(sphereShape);
+  sphereBody.position.set(0, 1.75, 16.3);
+  sphereBody.linearDamping = 0.9;
+  world.addBody(sphereBody)
+
+  // Create the ground plane
+  const groundShape = new CANNON.Plane()
+  const groundBody = new CANNON.Body({ mass: 0, material: physicsMaterial });
+  groundBody.addShape(groundShape);
+  groundBody.position.set(0, 0.02, 0); // There's a little offset on the model  
+  groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+  world.addBody(groundBody);
+}
 
 
+function initPointerLock() {
+
+  const blocker = document.getElementById('blocker');
+  const instructions = document.getElementById('instructions');
+
+  instructions.style.display = 'none';
+  blocker.style.display = 'none';
+
+  controls = new PointerLockControlsCannon(camera, sphereBody)
+  controls.velocityFactor = 0.075;
+  controls.jumpVelocity = 0;
+  scene.add(controls.getObject())
+
+  instructions.addEventListener('click', () => {
+    controls.lock()
+  })
+
+  controls.addEventListener('lock', () => {
+    controls.enabled = true
+    instructions.style.display = 'none'
+    blocker.style.display = 'none';
+  })
+
+  controls.addEventListener('unlock', () => {
+    controls.enabled = false
+    instructions.style.display = null
+    blocker.style.display = 'block';
+  })
+}
 
 
 //
@@ -293,45 +259,18 @@ function onWindowResize() {
 function animate() {
 
   requestAnimationFrame(animate);
-  const time = performance.now();
 
-  worldDelta = Math.min(clock.getDelta(), 0.1);
-  world.step(worldDelta);
+  const time = performance.now() / 1000
+  const delta = time - lastCallTime
+  lastCallTime = time
 
-  // Copy coordinates from Cannon to Three.js
-  cubeMesh.position.set(
-    cubeBody.position.x,
-    cubeBody.position.y,
-    cubeBody.position.z
-  )
-  cubeMesh.quaternion.set(
-    cubeBody.quaternion.x,
-    cubeBody.quaternion.y,
-    cubeBody.quaternion.z,
-    cubeBody.quaternion.w
-  )
+  if (controls.enabled) {
+    world.step(timeStep, delta)
+  }
 
-  raycaster.ray.origin.copy(controls.getObject().position);
-  raycaster.ray.origin.y -= 10;
+  controls.update(delta)
+  stats.update();
 
-  const delta = (time - prevTime) / 1000;
-
-  velocity.x -= velocity.x * moveSpeed * delta;
-  velocity.z -= velocity.z * moveSpeed * delta;
-
-  velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
-
-  direction.z = Number(moveForward) - Number(moveBackward);
-  direction.x = Number(moveRight) - Number(moveLeft);
-  direction.normalize(); // this ensures consistent movements in all directions
-
-  if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
-  if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
-
-  controls.moveRight(- velocity.x * delta);
-  controls.moveForward(- velocity.z * delta);
-
-  prevTime = time;
   composer.render();
 
 }

@@ -16,6 +16,7 @@
     "gsap": "^3.11.5",
     "swiper": "^9.2.4",
     "three": "^0.151.3",
+    "three-to-cannon": "^4.3.0",
     "three.interactive": "^1.7.0"
   }
 }
