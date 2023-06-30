@@ -79,6 +79,8 @@ function init() {
 
   // Pixelated
   const renderPixelatedPass = new RenderPixelatedPass(4, scene, camera);
+  renderPixelatedPass.normalEdgeStrength = 0;
+
 
   composer = new EffectComposer(renderer);
   composer.addPass(renderScene);
