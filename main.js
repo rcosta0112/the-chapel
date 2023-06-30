@@ -25,7 +25,7 @@ const basePath = import.meta.env.BASE_URL;
 const container = document.getElementById('container');
 const loading = document.querySelector('.loading');
 
-let camera, scene, composer, renderer, stats;
+let camera, scene, composer, renderer, ambientSound, stats;
 
 
 // Pointer Lock Controls
@@ -88,6 +88,25 @@ function init() {
   // composer.addPass(bloomPass);
 
 
+
+  //
+  // Ambient Audio
+  //
+
+  // create an AudioListener and add it to the camera
+  const listener = new THREE.AudioListener();
+  camera.add(listener);
+
+  // create a global audio source
+  ambientSound = new THREE.Audio(listener);
+
+  // load a sound and set it as the Audio object's buffer
+  const audioLoader = new THREE.AudioLoader();
+  audioLoader.load('sounds/ambient.mp3', function (buffer) {
+    ambientSound.setBuffer(buffer);
+    ambientSound.setLoop(true);
+    ambientSound.setVolume(1);
+  });
 
 
 
@@ -231,12 +250,14 @@ function initPointerLock() {
     controls.enabled = true
     instructions.style.display = 'none'
     blocker.style.display = 'none';
+    ambientSound.play();
   })
 
   controls.addEventListener('unlock', () => {
     controls.enabled = false
     instructions.style.display = null
     blocker.style.display = 'block';
+    ambientSound.pause();
   })
 }
 
