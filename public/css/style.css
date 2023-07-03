@@ -26,6 +26,10 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+
+  background: #38d5ed;
+  background: url('../images/menu-background.png') no-repeat 50%;
+  background-size: cover;
 }
 
 #container {
@@ -55,8 +59,9 @@ body {
   opacity: 0;
   transition: opacity 1s ease;
   pointer-events: none;
-  pointer-events: none;
   background: #38d5ed;
+  background: url('../images/menu-background.png') no-repeat 50%;
+  background-size: cover;
 }
 
 .loading.in {
@@ -88,7 +93,6 @@ a {
 .main-menu {
   width: 100%;
   height: 100vh;
-  background-color: #38d5ed;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -99,6 +103,9 @@ a {
   bottom: 0%;
   left: 0%;
   right: 0%;
+  background: #38d5ed;
+  background: url('../images/menu-background.png') no-repeat 50%;
+  background-size: cover;
 }
 
 .button {
@@ -192,10 +199,13 @@ a {
   font-size: 42px;
 }
 
+.about .h1 {
+  margin-bottom: 38px;
+}
+
 .about {
   width: 100%;
   min-height: 100vh;
-  background-color: #38d5ed;
   flex-direction: column;
   justify-content: start;
   align-items: center;
@@ -206,6 +216,9 @@ a {
   left: 0%;
   overflow-x: hidden;
   overflow-y: scroll;
+  background: #38d5ed;
+  background: url('../images/menu-background.png') no-repeat 50%;
+  background-size: cover;
 }
 
 .p {
@@ -224,11 +237,11 @@ a {
 }
 
 .hr {
-  width: 64%;
+  width: 30ch;
   height: 1px;
   background-color: #fff;
-  margin-top: 32px;
-  margin-bottom: 46px;
+  margin-top: 50px;
+  margin-bottom: 36px;
 }
 
 .main-meun {
