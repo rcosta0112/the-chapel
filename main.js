@@ -206,14 +206,12 @@ function initCannon() {
 
   world.broadphase.useBoundingBoxes = true
 
-  // Create a slippery material (friction coefficient = 0.0)
   physicsMaterial = new CANNON.Material('physics')
   const physics_physics = new CANNON.ContactMaterial(physicsMaterial, physicsMaterial, {
     friction: 0.0,
     restitution: 0.3,
   })
 
-  // We must add the contact materials to the world
   world.addContactMaterial(physics_physics)
 
   // Create the user collision sphere

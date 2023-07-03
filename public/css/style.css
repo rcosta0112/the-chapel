@@ -79,9 +79,6 @@ body {
   background: #fff;
 }
 
-p {
-  margin-bottom: 10px;
-}
 
 a {
   color: #fff;
@@ -212,8 +209,8 @@ a {
 }
 
 .p {
-  max-width: 54ch;
-  margin-bottom: 1em;
+  max-width: 52ch;
+  margin-bottom: 0;
   line-height: 1.5;
 }
 
