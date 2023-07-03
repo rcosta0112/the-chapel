@@ -39,6 +39,8 @@ let sphereShape
 let sphereBody
 let physicsMaterial
 
+const progressBar = document.querySelector('.progress-bar-inner');
+
 initCannon();
 init();
 initPointerLock()
@@ -114,8 +116,7 @@ function init() {
   //  Loading external assets
   //
 
-
-  new EXRLoader()
+  const exrloader = new EXRLoader()
 
     .setPath(basePath + 'images/textures/')
     .load('skybox.exr', function (texture) {
@@ -166,9 +167,10 @@ function init() {
 
         });
 
-      });
+      }, progressBarHandler);
 
     });
+
 
   stats = new Stats();
   document.body.appendChild(stats.dom);
@@ -176,6 +178,10 @@ function init() {
   window.addEventListener('resize', onWindowResize);
 
 } // /Init
+
+function progressBarHandler(e){
+    progressBar.style.width = Math.round(e.loaded * 100 / e.total) + "%";
+}
 
 
 function initCannon() {
