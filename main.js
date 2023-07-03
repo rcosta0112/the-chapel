@@ -25,7 +25,7 @@ const basePath = import.meta.env.BASE_URL;
 const container = document.getElementById('container');
 const loading = document.querySelector('.loading');
 
-let camera, scene, composer, renderer, ambientSound, stats;
+let camera, scene, composer, renderer, ambientSound, stats, startButton;
 
 
 // Pointer Lock Controls
@@ -196,7 +196,7 @@ function initCannon() {
   // use this to test non-split solver
   // world.solver = solver
 
-  world.gravity.set(0, -1, 0)
+  world.gravity.set(0, -2, 0)
 
   world.broadphase.useBoundingBoxes = true
 
@@ -233,6 +233,10 @@ function initPointerLock() {
 
   const blocker = document.getElementById('blocker');
   const instructions = document.getElementById('instructions');
+  const aboutPage = document.querySelector('.about');
+  const startButton = document.querySelector('.start-button');
+  const aboutButton = document.querySelector('.about-button');
+  const backButton = document.querySelector('.back-button');
 
   instructions.style.display = 'none';
   blocker.style.display = 'none';
@@ -242,7 +246,7 @@ function initPointerLock() {
   controls.jumpVelocity = 0;
   scene.add(controls.getObject())
 
-  instructions.addEventListener('click', () => {
+  startButton.addEventListener('click', () => {
     controls.lock()
   })
 
@@ -259,6 +263,17 @@ function initPointerLock() {
     blocker.style.display = 'block';
     ambientSound.pause();
   })
+
+  aboutButton.addEventListener('click', () => {
+    aboutPage.style.display = 'flex';
+    instructions.style.display = 'none';
+  })
+
+  backButton.addEventListener('click', () => {
+    aboutPage.style.display = 'none';
+    instructions.style.display = 'flex';
+  })
+
 }
 
 
