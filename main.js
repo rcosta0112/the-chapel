@@ -180,6 +180,7 @@ function init() {
 } // /Init
 
 function progressBarHandler(e){
+  console.log(e);
     progressBar.style.width = Math.round(e.loaded * 100 / e.total) + "%";
 }
 
