@@ -6,7 +6,6 @@ import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 
-import Stats from 'three/addons/libs/stats.module.js';
 
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -25,7 +24,7 @@ const basePath = import.meta.env.BASE_URL;
 const container = document.getElementById('container');
 const loading = document.querySelector('.loading');
 
-let camera, scene, composer, renderer, ambientSound, stats, startButton;
+let camera, scene, composer, renderer, ambientSound, startButton;
 
 
 // Pointer Lock Controls
@@ -172,9 +171,6 @@ function init() {
     });
 
 
-  stats = new Stats();
-  document.body.appendChild(stats.dom);
-
   window.addEventListener('resize', onWindowResize);
 
 } // /Init
@@ -312,7 +308,6 @@ function animate() {
   }
 
   controls.update(delta)
-  stats.update();
 
   composer.render();
 
